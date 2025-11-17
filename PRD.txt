@@ -1,7 +1,7 @@
 fileName: PRD.txt
 except: {{#compareName name}}{{/compareName}}
 ---
-Please implement DDD-based microservice architecture code for an event storming model-based domain using Spring Boot 3 and DDD Extension. The code must be implemented strictly based on the metadata provided below and @generation-rules:
+Please implement DDD-based microservice architecture code for an event storming model-based domain using Spring Boot and DDD Extension. The code must be implemented strictly based on the metadata provided below and @generation-rules:
 
 {{namePascalCase}} DDD Model:
 {{{contexts.json}}}
