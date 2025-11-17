@@ -1,0 +1,282 @@
+---
+
+description: Guidelines for composing React components based on metadata generated through DDD-based Event Storming.
+alwaysApply: false
+---
+
+Compose React component files by referring to the UI that should be generated for each Event Storming sticker below.
+Important: Components must be generated based only on metadata, and no arbitrary data not in metadata should be generated.
+
+## API Endpoint Configuration
+All API calls must follow the configuration defined in `@frontend-technical-stack` and `@frontend-generation-rules`:
+- **Base URL**: Refer to `@frontend-technical-stack` for axios client configuration
+- **Environment Variables**: Refer to `@frontend-generation-rules` for Gateway integration settings
+
+1. Aggregate
+
+Metadata: Generate by referring to data under aggregates
+
+[Aggregate]Page.tsx - Aggregate CRUD UI (React page component)
+Router: /[aggregates.namePlural] (React Router-based routing)
+Filename: [aggregates.name]Page.tsx, [aggregates.name]Form.tsx, [aggregates.name]Table.tsx
+
+Included Elements
+1) Generate lookup page in Material-UI DataGrid or Table format based on aggregate properties (aggregateRoot.fieldDescriptors), implementing structure where queries automatically execute upon entering aggregate router
+2) Identify className to generate type-specific Material-UI components (TextField, Select, DatePicker...)
+3) Always generate action buttons according to CUD following JPA Repository (Create, Update, Delete - using Material-UI Button)
+4) Generate buttons according to Extend API (generate based on command information when commands.isRestRepository is false)
+5) Generate search bar functionality (when views.queryparameters exists - using Material-UI TextField)
+6) Refer to `@frontend-design-system` for styles and utilize Material-UI sx props
+
+[Aggregate]Form.tsx - Create and edit form UI following JPA Repository pattern
+1) Generate form as Material-UI Dialog or separate page connected through create and update buttons generated in [Aggregate]Page.tsx. **CRUD API Generation Priority**:
+   - **Priority 1**: When backend controller files exist (e.g., `infra/*Controller.java` or `*Repository.java`), generate frontend CRUD API exactly matching backend's endpoint paths, HTTP methods, and request/response structure
+   - **Priority 2**: When backend files don't exist, refer to `openapi.yaml` file under boundedContext to generate CRUD API following defined paths and specifications
+   - **Default Pattern**: When both sources are unavailable, follow JPA Repository format using plural naming convention for each aggregate (e.g., GET /aggregates, POST /aggregates, PUT /aggregates/{id}, DELETE /aggregates/{id})
+2) Generate Material-UI input components for form fields based on aggregate properties
+3) Identify className to generate type-specific input forms (TextField, Select, DatePicker, Switch...)
+4) Implement form validation using React Hook Form and Yup
+5) Refer to `@frontend-design-system` for styles and utilize Material-UI theme system
+6) **API Configuration**: Follow `@frontend-technical-stack` axios client settings
+
+React Component Example:
+```typescript
+// [Aggregate]Page.tsx
+import React, { useState, useEffect } from 'react';
+import { Box, Button, Typography, Card, CardContent } from '@mui/material';
+import { Add, Edit, Delete } from '@mui/icons-material';
+import [Aggregate]Table from './[Aggregate]Table';
+import [Aggregate]Form from './[Aggregate]Form';
+
+const [Aggregate]Page: React.FC = () => {
+  const [items, setItems] = useState([]);
+  const [formOpen, setFormOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+
+  return (
+    <Box sx={{ p: 3 }}>
+      <Typography variant="h4" component="h1" gutterBottom>
+        [Aggregate] Management
+      </Typography>
+      
+      <Card>
+        <CardContent>
+          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between' }}>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => setFormOpen(true)}
+            >
+              Create [Aggregate]
+            </Button>
+          </Box>
+          
+          <[Aggregate]Table 
+            data={items}
+            onEdit={setSelectedItem}
+            onDelete={handleDelete}
+            sx={{ width: '100%' }}
+          />
+        </CardContent>
+      </Card>
+      
+      <[Aggregate]Form
+        open={formOpen}
+        onClose={() => setFormOpen(false)}
+        data={selectedItem}
+        onSave={handleSave}
+      />
+    </Box>
+  );
+};
+```
+---
+
+2. Command
+
+Metadata: Generate by referring to data under commands
+Filename: [commands.namePascalCase]Button.tsx, [commands.namePascalCase]Modal.tsx
+
+Included Elements
+1) When command metadata's isRestRepository is false, generate additional Material-UI button in [Aggregate]Page.tsx excluding CUD action buttons
+2) Convert code from BoundedContext Name/Aggregate Name/AggregateWireframe.md to React and use basic Material-UI button and dialog UI content as is. All components generated in wireframe must be created without omission
+3) **API Endpoint Generation Priority**: For command-based APIs, follow these layers to ensure frontend API matches backend implementation:
+   - **Priority 1**: When backend controller files exist (e.g., `infra/*Controller.java` under boundedContext), generate frontend API calls exactly matching controller's endpoint paths, HTTP methods, and parameter structure
+   - **Priority 2**: When backend controller files don't exist, refer to `openapi.yaml` file under boundedContext to use exact path values defined (e.g., `/orders/{id}/cancelorder`, `/orders/{id}/acceptorder`)
+   - **Limitation**: Generate only API endpoints explicitly defined in controller files or openapi.yaml. Do not generate arbitrary or inferred endpoints not documented in these sources
+4) Implement command execution logic using React Hook patterns
+5) **API Configuration**: Follow `@frontend-technical-stack` axios client configuration, all API requests and responses proceed in Spring Data REST API format
+
+Example: Author Approval Command (when isRestRepository:false) - Required Sequence
+Files to create and modify: AuthorPage.tsx, ApproveAuthorButton.tsx, ApproveAuthorModal.tsx
+1. **API Endpoint Discovery**: First check if `infra/AuthorController.java` exists and find approval-related endpoints (e.g., `@PostMapping("/authors/{id}/approve")`). If no controller, check author approval path in `openapi.yaml`
+2. Convert HTML code listed in BoundedContext Name/Aggregate Name/AggregateWireframe.md to React
+3. Generate button UI with API calls matching discovered endpoints in CommandButton.tsx
+4. When generating button, implement conditional rendering activated through table row click
+5. Generate modal-related UI in CommandModal.tsx
+6. Generate button in same style as register button in AggregatePage.tsx to call CommandButton.tsx, then connect to CommandButton
+```
+<Button
+  variant="contained"
+  startIcon={<AddIcon />}
+  onClick={handleAddAuthor}
+>
+  Approve Author
+</Button>
+```
+---
+
+
+3. ReadModel
+Metadata: Generate by referring to data under views
+Filename: [views.namePascalCase]Search.tsx, [views.namePascalCase]Dashboard.tsx
+
+[ReadModel]Search.tsx - Search UI for searching data registered in aggregates
+1) Generate only when metadata views.dataProjection: query-for-aggregate (never generate otherwise)
+2) Implement SearchBar using Material-UI TextField searchable in [Aggregate]Page.tsx
+3) Set search conditions based on views.queryParameters
+4) Process so conditions matching search criteria appear in Material-UI Table when searching
+5) Convert html code from BoundedContext Name/Aggregate Name/AggregateWireframe.md to React to generate UI and styles
+6) **API Configuration**: Follow `@frontend-technical-stack` axios client settings and apply same API endpoint generation priority as defined in Command section (controller files first, then openapi.yaml)
+
+[ReadModel]Dashboard.tsx - Dashboard UI for viewing properties registered in ReadModel
+Router: /[views.namePlural] (React Router-based routing)
+1) Generate only when metadata views.dataProjection: cqrs (never generate otherwise)
+2) Implement view UI using Material-UI components based on data declared in fieldDescriptors
+3) Convert html code from BoundedContext Name/Aggregate Name/AggregateWireframe.md to React to generate UI and styles
+4) **API Configuration**: Follow `@frontend-technical-stack` axios client settings and apply same API endpoint generation priority as defined in Command section (controller files first, then openapi.yaml)
+
+React Component Example:
+```typescript
+// [ReadModel]Dashboard.tsx
+import React, { useState, useEffect } from 'react';
+import { Box, Card, CardContent, Typography, Button, Grid } from '@mui/material';
+import { Refresh } from '@mui/icons-material';
+import { useQuery } from '@tanstack/react-query';
+
+const [ReadModel]Dashboard: React.FC = () => {
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['[readmodel]'],
+    queryFn: fetch[ReadModel]Data,
+  });
+
+  return (
+    <Box sx={{ p: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+        <Typography variant="h4" component="h1">
+          [ReadModel] Dashboard
+        </Typography>
+        <Button
+          variant="outlined"
+          startIcon={<Refresh />}
+          onClick={() => refetch()}
+        >
+          Refresh
+        </Button>
+      </Box>
+
+      <Grid container spacing={3}>
+        {data?.map((item) => (
+          <Grid item xs={12} sm={6} md={4} key={item.id}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6">{item.title}</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {item.description}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+    </Box>
+  );
+};
+```
+---
+
+
+
+4. BoundedContext
+Metadata: Generate by referring to boundedContexts data
+
+HomePage.tsx (Root main page)
+1) Generate main page based on metadata options.package name and set router to Root (e.g., localhost:3000/). Then connect all aggregates names and routers to implement Home page in Material-UI Card format.
+2) When configuring left sidebar using Material-UI AppBar and Drawer, construct 2-level navigation with Home(Root), 1Level - boundedContext.name, 2Level - aggregates.name, views.name. Must navigate to corresponding page when clicked.
+
+React Component Example:
+```typescript
+// HomePage.tsx
+import React from 'react';
+import { Box, Grid, Card, CardContent, Typography, CardActionArea } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+
+const HomePage: React.FC = () => {
+  const navigate = useNavigate();
+
+  const boundedContexts = [
+    { name: 'Order', path: '/order', description: 'Order Management' },
+    { name: 'CustomerCenter', path: '/customercenter', description: 'Customer Center' },
+  ];
+
+  return (
+    <Box sx={{ p: 3 }}>
+      <Typography variant="h3" component="h1" gutterBottom>
+        Order Management System
+      </Typography>
+      
+      <Grid container spacing={3}>
+        {boundedContexts.map((context) => (
+          <Grid item xs={12} sm={6} md={4} key={context.name}>
+            <Card>
+              <CardActionArea onClick={() => navigate(context.path)}>
+                <CardContent>
+                  <Typography variant="h5" component="h2" gutterBottom>
+                    {context.name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {context.description}
+                  </Typography>
+                </CardContent>
+              </CardActionArea>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+    </Box>
+  );
+};
+```
+
+## Additional Guidelines for React Component Generation
+
+### 1. Type Definitions
+All components must define TypeScript interfaces:
+```typescript
+interface [Component]Props {
+  data?: any[];
+  onSave?: (data: any) => void;
+  onCancel?: () => void;
+}
+```
+
+### 2. State Management
+Refer to `@frontend-technical-stack` for React Hooks and React Query patterns.
+
+### 3. Form Handling
+Refer to `@frontend-technical-stack` for React Hook Form examples and patterns.
+
+### 4. Error Handling
+Implement error handling using ErrorBoundary and try-catch.
+
+### 5. Accessibility
+Utilize Material-UI's default accessibility features and add aria-label.
+
+### 6. API Service Configuration
+Use API client configuration defined in `@frontend-technical-stack`.
+
+### 7. Environment Variables
+Refer to `@frontend-generation-rules` for environment variable configuration.
+
+### 8. Commands
+When generating components based on commands metadata, follow Command generation requirements and openapi.yaml when isRestRepository:false.

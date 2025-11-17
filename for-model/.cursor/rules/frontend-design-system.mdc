@@ -1,0 +1,140 @@
+---
+
+description: Clean and modern design system based on React + TypeScript + Material-UI. Provides guidelines for consistent user experience and maintainable code.
+alwaysApply: false
+---
+
+# React Frontend Design System
+
+A clean and modern design system based on React + TypeScript + Material-UI. Provides guidelines for consistent user experience and maintainable code.
+
+## 🎨 Color System
+
+### Material-UI Theme Colors
+- **Primary**: `#2196f3` (Main action buttons, brand elements)
+- **Secondary**: `#f50057` (Secondary actions, inactive states)  
+- **Success**: `#4caf50` | **Warning**: `#ff9800` | **Error**: `#f44336` | **Info**: `#2196f3`
+- **Background**: `#fafafa` (default), `#ffffff` (paper)
+- **Text**: `primary`, `secondary`, `disabled` variants
+
+### Theme Configuration
+Refer to `@frontend-technical-stack` for default settings. Extended themes include design system-specific colors and automatic dark mode support.
+
+## 📝 Typography
+
+### Material-UI Typography Variants
+- **Headings**: `h1` (fontWeight: 700), `h2-h6` (fontWeight: 600)
+- **Body**: `body1` (main content), `body2` (smaller text)
+- **Caption**: Small text with `color="text.secondary"`
+- **Colors**: `primary`, `secondary`, `error`, `success.main`, `text.secondary`
+
+## 🏗️ Layout & Spacing
+
+### Container System
+- **Container**: `maxWidth="xl"` (1536px), responsive padding with `px/py` props
+- **Box**: Custom containers with `maxWidth`, `padding`, `margin` properties
+- **Responsive**: Use breakpoint objects `{ xs: 2, sm: 3, md: 4 }`
+
+### Grid System
+- **Grid Container**: `spacing={2|3}` for consistent spacing
+- **Grid Items**: `xs={12} sm={6} md={4}` for responsive columns
+- **Common Patterns**: 4-column stats, 3-column services, responsive layouts
+
+## 🎴 Component Styles
+
+### Cards
+- **Basic**: `elevation={2}`, `sx={{ p: 2, borderRadius: 2 }}`
+- **Hover Effects**: `transform: 'translateY(-2px)'`, `transition: 'all 0.2s ease'`
+
+### Buttons
+- **Primary**: `variant="contained" color="primary"` with `startIcon`
+- **Secondary**: `variant="outlined" color="inherit"`
+- **Text**: `variant="text" color="primary"`
+- **Sizes**: `small`, `medium`, `large`
+
+### Avatar & Chips
+- **Avatar**: `sx={{ bgcolor: 'primary.main', width: 56, height: 56 }}`
+- **Status Chips**: `color="success|warning|error"`, `variant="filled"`, `size="small"`
+
+## 📊 Data Tables
+
+### Material-UI Table
+- **Container**: Wrap with `Card` → `CardContent` → `TableContainer`
+- **Styling**: Headers with `bgcolor: 'grey.50'`, hover effects on rows
+- **Actions**: IconButton with `Edit`/`Delete` icons, status with chips
+
+### MUI X DataGrid
+- **Columns**: Define `GridColDef[]` with field, headerName, width, sortable
+- **Custom Cells**: Use `renderCell` for chips, icons, custom content
+- **Features**: Pagination, sorting, filtering with `autoHeight`
+
+## 🎭 Animation & Interaction
+
+### Framer Motion
+- **Fade**: `initial={{ opacity: 0 }}`, `animate={{ opacity: 1 }}`, `transition={{ duration: 0.3 }}`
+- **Slide**: Add `x: -50` to `x: 0` for entrance effects
+- **Material-UI**: Use `Fade`, `Slide`, `Grow` components with `timeout` prop
+
+### Loading States
+- **Skeleton**: `variant="rectangular"` with `height`, `width`, `borderRadius`
+- **Progress**: `CircularProgress` with `color="primary"`, `size={40}`
+- **Backdrop**: Fullscreen overlay with `zIndex: 9999`
+
+## 🌙 Dark Mode & Responsive Design
+
+### Theme Toggle
+- Create `ThemeContext` with `mode: 'light' | 'dark'` and `toggleMode` function
+- Use `ThemeProvider` for dynamic theme switching
+- Toggle button with `LightMode`/`DarkMode` icons
+
+### Responsive Breakpoints
+- **Breakpoints**: `xs`, `sm`, `md`, `lg`, `xl`
+- **useMediaQuery**: `theme.breakpoints.down('md')` for mobile detection
+- **Responsive Props**: `{ xs: 2, md: 3 }` for spacing, display, etc.
+
+## 🔄 Accessibility
+
+### Accessibility Guidelines
+- **Color Contrast**: Minimum 4.5:1 ratio, use icon + text for critical information
+- **Keyboard Navigation**: Tab order and focus indicators
+- **Screen Readers**: `aria-label`, `VisuallyHidden` component for screen readers
+
+## 🚀 Implementation Guidelines
+
+### Page Structure
+```typescript
+// Basic page pattern
+<Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+  <Container maxWidth="xl" sx={{ p: 3 }}>
+    <Typography variant="h3" component="h1" gutterBottom>Page Title</Typography>
+    <Grid container spacing={3}>
+      <Grid item xs={12}>
+        <Card elevation={2}>
+          <CardContent>{/* Content */}</CardContent>
+        </Card>
+      </Grid>
+    </Grid>
+  </Container>
+</Box>
+```
+
+### Component Patterns
+- **Card Component**: Avatar + Typography + Chip + IconButton layout
+- **TypeScript**: Define interfaces for all component props
+- **Responsive**: Use breakpoint objects for all spacing and layouts
+
+## 📋 Design System Checklist
+
+### Essential Requirements
+- [x] **Material-UI Components**: Use Typography, Grid, Container, Box for layouts
+- [x] **Theme System**: Implement dark/light mode with ThemeProvider
+- [x] **Responsive Design**: Apply breakpoint objects and useMediaQuery
+- [x] **TypeScript**: Complete type definitions for all components
+- [x] **Accessibility**: aria-label, keyboard navigation, 4.5:1 color contrast
+
+### Key Features
+- **Type Safety**: Built-in TypeScript support
+- **Accessibility**: Default Material-UI accessibility features
+- **Theme System**: Dark/light mode switching
+- **Responsive**: sx props and useMediaQuery
+- **Performance**: Optimized Material-UI components

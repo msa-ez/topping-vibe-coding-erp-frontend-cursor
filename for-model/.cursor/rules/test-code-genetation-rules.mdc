@@ -1,0 +1,93 @@
+---
+
+description: Defines essential specifications for writing test files in projects based on Given-When-Then pattern.
+alwaysApply: false
+---
+
+When generating test code for the project, it must be generated based on the content and requirements below.
+
+Reference Metadata:
+When writing test code, it must be based on given, when, then data under examples data in Metadata.
+
+Test Code Components:
+1. Must configure imports and code related to JUnit and Spring Boot
+2. JPA test setup through DataJPATest annotation
+3. Kafka configuration is strictly prohibited. Must replace with Mock if needed
+4. Test code must be generated using Given-When-Then pattern:
+   - Given: Set up test data and preconditions
+   - When: Action or method being tested
+   - Then: Verify expected results
+5. Once test file configuration is complete, immediately execute tests and repeat execution - testing until final test passes by fixing errors.
+
+Example File
+```
+@Test
+    @SuppressWarnings("unchecked")
+    public void test0() {
+        //given:
+        Inventory entity = new Inventory();
+
+        entity.setId(1L);
+        entity.setStock(10);
+        entity.setProductName("TV");
+
+        repository.save(entity);
+
+        //when:
+
+        OrderPlaced event = new OrderPlaced();
+
+        event.setId(1L);
+        event.setProductId("1");
+        event.setQty(5);
+        event.setCustomerId("CUST001");
+        event.setProductName("TV");
+
+        InventoryApplication.applicationContext = applicationContext;
+
+        ObjectMapper objectMapper = new ObjectMapper()
+            .configure(
+                DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,
+                false
+            );
+        try {
+            String msg = objectMapper.writeValueAsString(event);
+
+            processor
+                .inboundTopic()
+                .send(
+                    MessageBuilder
+                        .withPayload(msg)
+                        .setHeader(
+                            MessageHeaders.CONTENT_TYPE,
+                            MimeTypeUtils.APPLICATION_JSON
+                        )
+                        .setHeader("type", event.getEventType())
+                        .build()
+                );
+
+            //then:
+
+            Message<String> received = (Message<String>) messageCollector
+                .forChannel(processor.outboundTopic())
+                .poll();
+
+            assertNotNull("Resulted event must be published", received);
+
+            StockDecreased outputEvent = objectMapper.readValue(
+                (String) received.getPayload(),
+                StockDecreased.class
+            );
+
+            LOGGER.info("Response received: {}", received.getPayload());
+
+            assertEquals(String.valueOf(outputEvent.getId()), "1");
+            assertEquals(String.valueOf(outputEvent.getStock()), "5");
+            assertEquals(String.valueOf(outputEvent.getProductName()), "TV");
+        } catch (JsonProcessingException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            assertTrue(e.getMessage(), false);
+        }
+    }
+```

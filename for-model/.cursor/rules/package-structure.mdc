@@ -1,0 +1,60 @@
+---
+
+description: Must be used when structuring packages based on requirements requested through PRD. Includes Spring Boot-based project configuration and brief descriptions of files to be generated.
+alwaysApply: false
+---
+
+Package Structure Requirements for Code Generation
+
+Generate the following files according to the following structure and file descriptions based on provided metadata.
+
+```
+/gateway # gateway route settings @fixed-generation-rules (optional)
+  /src/main
+    /java/[projectname]
+      /Application.java
+    /resources
+      /application.yml
+  /pom.xml
+
+/kafka # Kafka infrastructure based on docker-compose (required)
+  /docker-compose.yml # Zookeeper + Kafka configuration
+
+/[service] # Microservice directory generated with service name
+  /src
+    /main
+      /java/[projectname]
+        /[ServiceName]Application.java # @SpringBootApplication + @EnableBinding(KafkaProcessor.class)
+        
+        /config
+          /kafka
+            /KafkaProcessor.java # Spring Cloud Stream channel interface (@Input/@Output)
+        
+        /domain
+          /[Aggregate].java # Aggregate Root defined with @Entity
+          /[Aggregate]Repository.java # JpaRepository interface
+          /[Event].java # Domain event class extending AbstractEvent
+          /[ValueObject].java # Embedded value object (optional)
+          /[Entity].java # Entity within Aggregate (optional)
+        
+        /infra
+          /AbstractEvent.java # Parent class for all domain events (publish(), publishAfterCommit())
+          /[Aggregate]Controller.java # REST API Controller (complements Spring Data REST auto-generation, optional)
+          /[Aggregate]HateoasProcessor.java # HATEOAS resource processor (optional)
+          /PolicyHandler.java # Receive external events with @StreamListener (if policies exist)
+      
+      /resources
+        /application.yml # Spring Cloud Stream binding configuration (event-in, event-out)
+    
+    /test
+      /java/[projectname]
+        /[ServiceName]Test.java # Cucumber/JUnit tests (optional)
+  
+  /kubernetes
+    /deployment.yaml # Kubernetes Deployment manifest
+    /service.yaml # Kubernetes Service manifest
+  
+  /pom.xml # Maven dependencies (Spring Boot 2.3.1.RELEASE)
+  /Dockerfile # Container image build configuration
+  /README.md # Service documentation (optional)
+```
