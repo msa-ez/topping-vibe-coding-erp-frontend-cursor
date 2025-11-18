@@ -1,11 +1,7 @@
 ---
-
-
 description: Contains information about frameworks, tech stack, databases, and architecture to use when setting up Spring Boot and DDD Extension-based projects.
 alwaysApply: false
 ---
-
-
 When generating code, strictly adhere to the following frameworks, technologies, databases and utilities, architecture patterns and design methodologies.
 
 Core Frameworks
@@ -32,7 +28,7 @@ Main Technologies
    - Version: 1.18.12
 
 Test Methodology
-Refer to @test-code-genetation-rules for detailed test implementation specifications.
+Refer to `@test-code-generation-rules` for detailed test implementation specifications.
 1. Practice Test-Driven Development (TDD)
    - Unit testing using JUnit
    - Integration testing using Spring Test

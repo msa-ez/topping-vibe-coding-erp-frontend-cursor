@@ -1,11 +1,7 @@
 ---
-
-
 description: Applied when implementing domain event publishing and handling rules based on Spring Boot DDD Extension. Includes requirements for EventListener and registerEvent() logic processing.
 alwaysApply: false
 ---
-
-
 Spring Cloud Stream-based event publishing and consumption code must be structured according to the following requirements.
 
 ## Core Components

@@ -1,11 +1,7 @@
 ---
-
-
 description: Defines essential specifications for writing test files in projects based on Given-When-Then pattern.
 alwaysApply: false
 ---
-
-
 When generating test code for the project, it must be generated based on the content and requirements below.
 
 Reference Metadata:
@@ -94,17 +90,18 @@ Example File
     }
 ```
 
-The following shows an example of successful test completion. A test is considered to have passed only when the completion log is output as shown below during test execution. Any Build Fail errors must be fixed.
+The following shows an example of successful test completion. 
 ```
 [INFO] 
 [INFO] Results:
 [INFO] 
 [INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0
 [INFO] 
-[INFO] ------------------------------------------------------------------------
+[INFO] 
 [INFO] BUILD SUCCESS
-[INFO] ------------------------------------------------------------------------
-[INFO] Total time:  01:15 min
-[INFO] Finished at: 2025-11-18T01:11:40Z
-[INFO] ------------------------------------------------------------------------
+[INFO] 
 ```
+
+Test Rules:
+1. A test is considered to have passed only when the completion log is output as shown below during test execution. Any Build Fail errors must be fixed.
+2. When repeating the test-fix cycle, the '-DskipTests' option should absolutely not be used, and iterative testing and error fixing must proceed until the final test is successfully completed.
