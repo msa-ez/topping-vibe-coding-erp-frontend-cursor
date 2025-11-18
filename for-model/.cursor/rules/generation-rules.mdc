@@ -1,8 +1,10 @@
 ---
 
+
 description: This file must be read first to understand the code generation sequence and mandatory rules when proceeding with code generation according to each BoundedContext's PRD.
 alwaysApply: false
 ---
+
 
 Generate projects according to the following requirements:
 

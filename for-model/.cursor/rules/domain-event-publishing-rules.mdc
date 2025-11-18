@@ -1,8 +1,10 @@
 ---
 
+
 description: Applied when implementing domain event publishing and handling rules based on Spring Boot DDD Extension. Includes requirements for EventListener and registerEvent() logic processing.
 alwaysApply: false
 ---
+
 
 Spring Cloud Stream-based event publishing and consumption code must be structured according to the following requirements.
 
@@ -112,7 +114,9 @@ public class AbstractEvent {
 ```
 
 ### 3. Domain Event Class Implementation (domain package)
-```java
+
+Example: 
+```
 package [projectname].domain;
 
 import [projectname].infra.AbstractEvent;
@@ -138,6 +142,8 @@ public class OrderPlaced extends AbstractEvent {
 ```
 
 ### 4. Publishing Events from Aggregate Root (domain package)
+
+Example: 
 ```
 @PostPersist
 public void onPostPersist() {

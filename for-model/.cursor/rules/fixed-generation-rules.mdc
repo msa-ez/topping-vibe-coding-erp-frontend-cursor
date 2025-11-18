@@ -1,8 +1,10 @@
 ---
 
+
 description: Guidelines for files that must be generated and deployed for implementing and deploying microservices using Spring Boot framework in MSA-based project construction.
 alwaysApply: false
 ---
+
 
 When generating code for Spring Boot framework based on PRD, the following files must be created and added to Root or under each service.
 
@@ -92,6 +94,7 @@ server:
 
 ---
 
+
 spring:
   config:
     activate:
@@ -131,6 +134,7 @@ spring:
               - "*"
             allowCredentials: true
 ---
+
 spring:
   config:
     activate:

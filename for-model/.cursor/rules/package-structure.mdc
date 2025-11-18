@@ -1,8 +1,10 @@
 ---
 
+
 description: Must be used when structuring packages based on requirements requested through PRD. Includes Spring Boot-based project configuration and brief descriptions of files to be generated.
 alwaysApply: false
 ---
+
 
 Package Structure Requirements for Code Generation
 

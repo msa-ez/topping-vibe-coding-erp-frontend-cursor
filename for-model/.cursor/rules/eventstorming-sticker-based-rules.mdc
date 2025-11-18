@@ -1,8 +1,10 @@
 ---
 
+
 description: Used when structuring Java files based on Clean Architecture in Spring Boot. Contains metadata, required file generation, and prerequisites for each sticker type in DDD-based Event Storming models.
 alwaysApply: false
 ---
+
 
 Code generated based on Event Storming stickers must follow these requirements:
 
