@@ -1,0 +1,56 @@
+---
+description: This document is a guide for preventing and resolving common errors that occur when generating React + TypeScript + Vite-based Frontend application code.
+alwaysApply: false
+---
+
+Review the content below and make the necessary corrections if any of the following cases apply when the final Frontend is implemented.
+
+1. Adding Zustand package
+
+Error message:
+Failed to resolve import "zustand" 
+
+Solution:
+Execute 'npm install zustand' command
+
+2. Loading import error
+
+Error message:
+import { Loading } from '../../components/common/Loading';
+Uncaught SyntaxError: The requested module does not provide an export named 'Loading'
+
+Solution:
+Modify to 'export const Loading: React.FC<LoadingProps> = ({ message = 'Loading...' }) =>'
+
+3. 500 error occurring in Local environment (port 3000)
+
+Error message:
+GET http://localhost:3000/orders 500 (Internal Server Error)
+
+Cause:
+```
+useEffect(() => {
+  fetchOrders();
+}, [fetchOrders]);
+When fetchOrders() is called, if backend is unavailable, it fails and screen is not displayed
+```
+
+Solution:
+Process axios calls as shown below so that UI displays normally even when backend is unavailable.
+```
+const fetchOrders = useCallback(async (params?: { page?: number; size?: number }) => {
+  setLoading(true);
+  clearError();
+  try {
+    const response = await orderService.getAll(params);
+    setOrders(response.content || []);
+  } catch (err: any) {
+    // Set empty array even when backend connection fails to ensure UI displays normally
+    setOrders([]);
+  } finally {
+    setLoading(false);
+  }
+}, [setOrders, setLoading, setError, clearError]);
+```
+
+4. 

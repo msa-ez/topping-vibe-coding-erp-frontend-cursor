@@ -94,7 +94,7 @@ When generating the main page, it must be created with the following layout form
     }}
     onClick={() => navigate('/')}
   >
-    <Typography variant="h6" color="primary">odooerp</Typography>
+    <Typography variant="h6" color="primary">{{options.package}}</Typography>
   </Box>
   <List>
     <ListItem button onClick={() => navigate('/dashboard')}>

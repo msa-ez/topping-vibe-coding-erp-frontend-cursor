@@ -1,5 +1,4 @@
 ---
-
 description: Defines metadata-based component generation rules for React + TypeScript projects. Focuses on development processes based on Event Storming stickers beyond basic project setup.
 globs: Frontend-PRD.txt
 alwaysApply: false
@@ -15,7 +14,7 @@ This rule defines the process for generating components based on Event Storming 
 
 ## Metadata-Based Component Generation Sequence
 ```
-Analyze metadata → Create BoundedContext folders → Generate Aggregate-based components → Discover API endpoints → Generate Command components (conditional) → Generate ReadModel components (conditional) → Connect generated Odoo-related components → Configure routing → Environment variables and Gateway configuration → Final validation of generated components
+Analyze metadata → Create BoundedContext folders → Generate Aggregate-based components → Discover API endpoints → Generate Command components (conditional) → Generate ReadModel components (conditional) → Connect generated Odoo-related components → Configure routing → Environment variables and Gateway configuration → check `@frontend-troubleshooting-rules`
 ```
 
 ## Step-by-Step Component Generation Process
@@ -73,6 +72,7 @@ Generate only commands where `isRestRepository: false`:
 - Confirm whether to overwrite existing components
 
 ### Validation Checklist
+check `@frontend-troubleshooting-rules`
 1. **Gateway Connection**: Verify `localhost:8088` access
 2. **Environment Variables**: Verify `VITE_GATEWAY_URL` setting in `.env`
 3. **Route Access**: Verify all generated pages load properly

@@ -1,5 +1,4 @@
 ---
-
 description: Defines advanced tech stack configuration and metadata integration patterns for React + TypeScript + Vite projects. Focuses on optimization and DDD-based development beyond basic setup.
 alwaysApply: false
 ---

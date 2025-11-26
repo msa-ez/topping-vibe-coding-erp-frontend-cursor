@@ -1,6 +1,6 @@
-# Odoo-Style Frontend Essential Features Implementation Guide
+# ERP Frontend Essential Features Implementation Guide
 
-> Reference: Odoo Official Documentation (https://www.odoo.com/documentation/17.0/applications/essentials/)
+> Reference: Odoo ERP Official Documentation (https://www.odoo.com/documentation/17.0/applications/essentials/)
 > 
 > Important: All files listed below MUST be generated.
 

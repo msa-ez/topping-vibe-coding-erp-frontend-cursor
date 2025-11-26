@@ -1,5 +1,4 @@
 ---
-
 description: Guidelines for composing React components based on metadata generated through DDD-based Event Storming.
 alwaysApply: false
 ---
