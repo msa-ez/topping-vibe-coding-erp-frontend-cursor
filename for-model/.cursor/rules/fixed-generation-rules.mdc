@@ -5,6 +5,87 @@ alwaysApply: false
 
 When generating code for Spring Boot framework based on PRD, the following files must be created and added to Root or under each service.
 
+0. application.yml per Service
+Location: boundedContext.nameCamelCase/src/main/resources
+Filename: application.yml
+Note: Two profiles exist (default, docker) and must be defined with spring.profiles
+```
+server:
+  port: 8084
+
+---
+
+spring:
+  profiles: default
+  jpa:
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+        implicit_naming_strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyComponentPathImpl
+  cloud:
+    stream:
+      kafka:
+        binder:
+          brokers: localhost:9092
+        streams:
+          binder:
+            configuration:
+              default:
+                key:
+                  serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+                value:
+                  serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+      bindings:
+        event-in:
+          group: [servicename]
+          destination: [projectname]
+          contentType: application/json
+        event-out:
+          destination: [projectname]
+          contentType: application/json
+
+logging:
+  level:
+    org.hibernate.type: trace
+    org.springframework.cloud: debug
+
+---
+
+spring:
+  profiles: docker
+  jpa:
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+        implicit_naming_strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyComponentPathImpl
+  cloud:
+    stream:
+      kafka:
+        binder:
+          brokers: my-kafka:9092
+        streams:
+          binder:
+            configuration:
+              default:
+                key:
+                  serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+                value:
+                  serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+      bindings:
+        event-in:
+          group: [servicename]
+          destination: [projectname]
+          contentType: application/json
+        event-out:
+          destination: [projectname]
+          contentType: application/json
+
+server:
+  port: 8080
+```
+
 1. Dockerfile
 Location: boundedContext.nameCamelCase/
 Filename: Dockerfile
@@ -91,11 +172,8 @@ server:
 
 ---
 
-
 spring:
-  config:
-    activate:
-      on-profile: default
+  profiles: default
   cloud:
     gateway:
 #<<< API Gateway / Routes
@@ -117,25 +195,17 @@ spring:
         corsConfigurations:
           '[/**]':
             allowedOriginPatterns:
-              - "http://localhost:*"
-              - "http://127.0.0.1:*"
-              - "https://localhost:*"
+              - "*"
             allowedMethods:
-              - "GET"
-              - "POST" 
-              - "PUT"
-              - "DELETE"
-              - "OPTIONS"
-              - "PATCH"
+              - "*"
             allowedHeaders:
               - "*"
             allowCredentials: true
+
 ---
 
 spring:
-  config:
-    activate:
-      on-profile: docker
+  profiles: docker
   cloud:
     gateway:
       routes:
@@ -154,17 +224,10 @@ spring:
       globalcors:
         corsConfigurations:
           '[/**]':
-            allowedOriginPatterns:
-              - "http://localhost:*"
-              - "http://127.0.0.1:*"
-              - "https://localhost:*"
+            allowedOrigins:
+              - "*"
             allowedMethods:
-              - "GET"
-              - "POST" 
-              - "PUT"
-              - "DELETE"
-              - "OPTIONS"
-              - "PATCH"
+              - "*"
             allowedHeaders:
               - "*"
             allowCredentials: true
@@ -238,7 +301,7 @@ public interface KafkaProcessor {
 }
 ```
 
-3) application.yml
+3) application.yml(If existing gateway module)
 Reflect the content below in the existing application.yml file.
 ```
 cloud:

@@ -53,4 +53,71 @@ const fetchOrders = useCallback(async (params?: { page?: number; size?: number }
 }, [setOrders, setLoading, setError, clearError]);
 ```
 
-4. 
+4. Spring Data REST HAL format response parsing error
+
+Error message:
+Uncaught ReferenceError: [entityId] is not defined
+Or data not displaying in table despite successful API response
+
+Cause:
+```
+Spring Data REST returns HAL format with _embedded wrapper and IDs in _links.self.href:
+{
+  "_embedded": {
+    "orders": [{ ...data, "_links": { "self": { "href": "http://localhost:8084/orders/1" }}}]
+  },
+  "page": {...}
+}
+Frontend expects flat structure with direct ID field like orderId.
+```
+
+Solution:
+Add HAL parser to extract ID from _links.self.href and unwrap _embedded data in service files.
+```typescript
+const extractIdFromHref = (href: string): number => {
+  return parseInt(href.split('/').pop()!, 10);
+};
+
+const parseHalResponse = (halData: any) => {
+  const items = halData._embedded?.orders?.map((item: any) => ({
+    ...item,
+    orderId: extractIdFromHref(item._links.self.href)
+  })) || [];
+  return { content: items, page: halData.page };
+};
+
+getAll: async (params) => {
+  const { data } = await apiClient.get(BASE_PATH, { params });
+  return parseHalResponse(data);
+}
+```
+
+5. Wireframe-based Command components not connected to Page
+
+Error message:
+Wireframe-generated buttons always disabled or Modal onSubmit not working or TypeScript error "Property 'onSubmit' is missing"
+
+Cause:
+Command functions not imported from hook, Modal onSubmit prop missing, Buttons lack disabled logic
+
+Solution:
+```typescript
+const { modifyOrder, fetchOrders } = useOrder();
+
+<Button 
+  disabled={!selectedOrderLocal}
+  onClick={() => setModifyOrderModalOpen(true)}
+>
+  Modify Order
+</Button>
+
+<ModifyOrderModal
+  open={modifyOrderModalOpen}
+  onClose={() => setModifyOrderModalOpen(false)}
+  onSubmit={async (cmd) => {
+    await modifyOrder(cmd);
+    fetchOrders();
+  }}
+  orderId={selectedOrderLocal?.orderId}
+/>
+```
