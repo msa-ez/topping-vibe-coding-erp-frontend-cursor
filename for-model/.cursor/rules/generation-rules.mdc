@@ -104,11 +104,11 @@ Project Generation Requirements
 - If not present, configure files through `@fixed-generation-rules`
 - If present, refer to `@fixed-generation-rules` to modify routes in gateway application.yml and handle kafka processing and topic settings in application.yml
 
-#### Step 10: Generate Test Code (Final)
+#### Step 11: Generate Test Code (Final)
 - Refer to `@test-code-generation-rules`
 - Given-When-Then pattern based on JUnit
 
-#### Step 11: Test and Run (Required)
+#### Step 12: Test and Run (Required)
 - Execute Maven build and tests
 - Verify local execution
 - Must repeat the test - error correction process until the test is successful, referring to `@test-code-generation-rules`.
