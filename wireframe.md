@@ -9,7 +9,7 @@ The style and text of the HTML below should be used as-is, but only the code for
 {{#attached 'Command' this}}
 {{#attached 'UI' this}}
 Name: {{../name}}
-EndPoint: {{../aggregate.namePulral}}/{{../controllerInfo.apiPath}}
+EndPoint: {{../aggregate.namePlural}}/{{../controllerInfo.apiPath}}
 ```
 {{#changeData runTimeTemplateHtml}}{{/changeData}}
 ```
