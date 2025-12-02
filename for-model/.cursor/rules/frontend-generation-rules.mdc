@@ -14,7 +14,7 @@ This rule defines the process for generating components based on Event Storming 
 
 ## Metadata-Based Component Generation Sequence
 ```
-Analyze metadata → Create BoundedContext folders → Generate Aggregate-based components → Discover API endpoints → Generate Command components (conditional) → Generate ReadModel components (conditional) → Connect generated Odoo-related components → Configure routing → Environment variables and Gateway configuration → check `@frontend-troubleshooting-rules`
+Analyze metadata → Create BoundedContext folders → Generate Aggregate-based components → Discover API endpoints → Generate Command components (conditional) → Generate ReadModel components (conditional) → Configure routing → Environment variables and Gateway configuration → check `@frontend-troubleshooting-rules`
 ```
 
 ## Step-by-Step Component Generation Process
@@ -46,19 +46,19 @@ Generate only commands where `isRestRepository: false`:
 - **Search**: `dataProjection: 'query-for-aggregate'` + `queryParameters` exists → `[View]Search.tsx`
 - **Dashboard**: `dataProjection: 'cqrs'` + `fieldDescriptors` exists → `[View]Dashboard.tsx`, `[View]Page.tsx`
 
-### Step 7: Connect Odoo-Related Generated Files and Components
-- Review components generated through `@erp-component-prd.txt`
-- Enable Aggregate component UI to call and import these components
-
-### Step 8: Routing Configuration (Metadata-Based)
+### Step 7: Routing Configuration (Metadata-Based)
 - **BC Routes**: `/${boundedContext.name}`
 - **Aggregate Routes**: `/${boundedContext}/${aggregate.namePlural}`  
 - **View Routes**: `/${view.namePlural}` (CQRS only)
 
-### Step 9: Environment Variables and Gateway Configuration
+### Step 8: Environment Variables and Gateway Configuration
 - **Environment Settings**: Set `VITE_GATEWAY_URL=http://localhost:8088` in `.env`, `.env.development`, `.env.production`
 - Gateway Route Configuration: Specify Frontend route (localhost:3000) in gateway's `application.yaml` routes
 - **API Path Validation**: Aggregate → `/${aggregate.namePlural}`, Command → `/${aggregate.namePlural}/{id}/{command.name}`
+
+### Step 9: Error Resolution After Final Code Generation
+- Review the entire codebase generated up to Step 8.
+- If any cases match those listed in @frontend-troubleshooting-rules, apply the corresponding solutions to fix them.
 
 ## Generation Guidelines
 
@@ -72,7 +72,6 @@ Generate only commands where `isRestRepository: false`:
 - Confirm whether to overwrite existing components
 
 ### Validation Checklist
-check `@frontend-troubleshooting-rules`
 1. **Gateway Connection**: Verify `localhost:8088` access
 2. **Environment Variables**: Verify `VITE_GATEWAY_URL` setting in `.env`
 3. **Route Access**: Verify all generated pages load properly
