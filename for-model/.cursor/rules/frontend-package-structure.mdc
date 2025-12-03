@@ -1,137 +1,40 @@
 ---
-description: Defines metadata-based dynamic component structure for React + TypeScript projects. Focuses on DDD Event Storming sticker-based file generation beyond basic project setup.
+description: Defines guidelines for metadata-based dynamic component structure for React + TypeScript projects.
 alwaysApply: false
 ---
-
 # Metadata-Based Dynamic Component Structure
-
-This rule defines the structure of dynamic components added based on metadata when the basic project structure is already created.
-
-**Prerequisites**: Basic frontend folder structure must already be created through `frontend-setup-prd.md`.
-
-For detailed implementation of each component type, refer to:
-- **Tech Stack**: `@frontend-technical-stack`
-- **Component Generation**: `@frontend-sticker-based-generation-rules`  
-- **Design System**: `@frontend-design-system`
-- **Development Process**: `@frontend-generation-rules`
-- **UI Examples**: BoundedContext Name/Aggregate Name/AggregateWireframe.md
+When creating the package structure in the first step of frontend-generation-rules, the following component structure must be followed.
 
 ## Metadata-Based Dynamic Component Structure
-
-```
-/src/components/[BoundedContext]/   # BC-specific dynamic component folder
-  # Aggregate-based components
-  /[Aggregate]Page.tsx              # Aggregate CRUD main page
-  /[Aggregate]Form.tsx              # Create/edit form
-  /[Aggregate]Table.tsx             # Data table
-  /[Aggregate]Card.tsx              # Card component
-  
-  # Entity/VO/Enum-based components (generated only when exists in metadata)
-  /[VO]Component.tsx                # Value Object component
-  /[Enum]Component.tsx              # Enum component  
-  /[Entity]Component.tsx            # Entity component
-  
-  # Command-based components (generated only when commands.isRestRepository is false)
-  /[Command]Button.tsx              # Command button component
-  /[Command]Modal.tsx               # Command modal component
-  
-  # Query/ReadModel-based components (generated based on metadata conditions)
-  /search/                          # Generated when views.queryparameters exists
-    /[ReadModel]Search.tsx          # Search bar UI implementation
-  /dashboard/                       # Generated when views.fieldDescriptors exists  
-    /[ReadModel]Dashboard.tsx       # Dashboard-dedicated page
-
-/src/pages/[BoundedContext]/        # BC-specific page components
-  /[BoundedContext]Page.tsx         # BC dashboard page
-  /[aggregate]/                     # Aggregate-specific page folder
-    /[Aggregate]Page.tsx            # Aggregate page
-  /[views]/                         # ReadModel-specific page folder
-    /[ReadModel]Page.tsx            # ReadModel dashboard page
-
-/src/hooks/[BoundedContext]/        # BC-specific custom hooks
-  /use[Aggregate].ts                # Aggregate-related hooks
-  /use[Command].ts                  # Command-related hooks  
-  /use[ReadModel].ts                # ReadModel-related hooks
-
-/src/services/[BoundedContext]/     # BC-specific API services
-  /[aggregate].service.ts           # Aggregate-related API service
-  /[command].service.ts             # Command-related API service
-  /[query].service.ts               # Query-related API service
-
-/src/store/[BoundedContext]/        # BC-specific state management
-  /[aggregate].store.ts             # Aggregate-related state management
-  /[command].store.ts               # Command-related state
-  /[query].store.ts                 # Query-related state
-
-/src/types/[BoundedContext]/        # BC-specific type definitions
-  /[aggregate].types.ts             # Aggregate-related TypeScript types
-  /[command].types.ts               # Command-related types
-  /[query].types.ts                 # Query-related types
-```
-
-## Metadata-Based File Generation Guidelines
-
-### Component Generation Rules
-- **BoundedContext-based**: Create separate folder structures for each BC
-- **Aggregate-based**: Generate CRUD component sets
-- **Command-based**: Generate business logic components (only when isRestRepository: false)
-- **ReadModel-based**: Generate query-only components (conditional)
-
-### File Naming Conventions
-- **Components**: `[MetadataName]ComponentType.tsx` (e.g., OrderPage.tsx, CreateOrderButton.tsx)
-- **Services**: `[metadataname].service.ts` (e.g., order.service.ts)
-- **Types**: `[metadataname].types.ts` (e.g., order.types.ts)
-- **Store**: `[metadataname].store.ts` (e.g., order.store.ts)
-- **Hooks**: `use[MetadataName].ts` (e.g., useOrder.ts)
-
-## Metadata-Based File Generation Rules
-
-### Aggregate-Based Generation (aggregates metadata)
-1. **Page**: `[AggregateRoot]Page.tsx` - CRUD interface
-2. **Form**: `[AggregateRoot]Form.tsx` - Create/edit form
-3. **Table**: `[AggregateRoot]Table.tsx` - Data table
-4. **Card**: `[AggregateRoot]Card.tsx` - Card view
-5. **Service**: `[aggregate].service.ts` - API service
-6. **Types**: `[aggregate].types.ts` - TypeScript types
-7. **Store**: `[aggregate].store.ts` - State management
-8. **Hook**: `use[Aggregate].ts` - Custom hook
-
-### Command-Based Generation (commands metadata, only when isRestRepository: false)
-1. **Button**: `[Command]Button.tsx` - Command execution button
-2. **Modal**: `[Command]Modal.tsx` - Command execution modal
-3. **Service**: `[command].service.ts` - Command API
-4. **Types**: `[command].types.ts` - Command types
-5. **Hook**: `use[Command].ts` - Command hook
-
-### ReadModel/View-Based Generation (views metadata)
-**Search Component** (when views.queryparameters exists):
-1. **Search**: `[ReadModel]Search.tsx` - Search interface
-2. **Service**: `[query].service.ts` - Search API
-
-**Dashboard Component** (when views.fieldDescriptors exists):
-1. **Dashboard**: `[ReadModel]Dashboard.tsx` - Dashboard page
-2. **Page**: `[ReadModel]Page.tsx` - Dedicated page
-3. **Types**: `[query].types.ts` - Query types
-4. **Hook**: `use[ReadModel].ts` - ReadModel hook
-
-### Entity/VO/Enum-Based Generation (when aggregateRoot.entities.relations exists)
-1. **VO Component**: `[VO]Component.tsx` - Value Object component
-2. **Enum Component**: `[Enum]Component.tsx` - Enum selection component
-3. **Entity Component**: `[Entity]Component.tsx` - Entity display component
-
-## React Router Structure (Metadata-Based)
-
-```typescript
-// BoundedContext-based routing
-/                                    # HomePage (navigation for all BCs)
-/[boundedContext]                    # BC dashboard page
-/[boundedContext]/[aggregatesPlural] # Aggregate page 
-/[viewsPlural]                       # ReadModel dashboard page
-
-// Example (metadata-based)
-/order                               # Order BC dashboard
-/order/orders                        # Order Aggregate page
-/orderhistories                      # OrderHistory ReadModel page
-```
-
-**Important**: All file generation must be strictly based on what is defined in metadata, and no arbitrary data not in metadata should be generated.
+/src/
+  /components/
+    /common/                        # Common components
+      Layout.tsx
+      Loading.tsx
+      Sidebar.tsx
+    /[aggregate]/                   # Aggregate-level folder
+      [Command]Modal.tsx            # Command modal (when isRestRepository: false)
+      [ReadModel]View.tsx           # ReadModel view component
+  /pages/
+    HomePage.tsx                    # Home page
+    DashboardPage.tsx               # Main dashboard
+    [Aggregate]sPage.tsx            # Aggregate main page
+    [ReadModel]Page.tsx             # ReadModel page
+  /hooks/
+    use[Aggregate].ts               # Aggregate custom hook
+  /services/
+    /api/                           # API client setup
+      client.ts
+      interceptors.ts
+      types.ts
+    [aggregate].service.ts          # Aggregate API service
+  /stores/
+    [aggregate].store.ts            # Aggregate state management
+  /types/
+    common.types.ts                 # Common types
+    api.types.ts                    # API types
+    [aggregate].types.ts            # Aggregate types
+  /theme/
+    index.ts                        # Material-UI theme
+  /utils/
+    constants.ts                    # Constants definition
