@@ -2,117 +2,144 @@
 description: This file must be read first to understand the code generation sequence and mandatory rules when proceeding with code generation according to each BoundedContext's PRD.
 alwaysApply: false
 ---
+# Backend Project Generation Rules
 
-Generate projects according to the following requirements:
+### Precautions
+- All component generation must be based on metadata and must be generated without omissions. However, you must not arbitrarily create components by referencing non-existent metadata.
+- Do not fall into error correction loops until all files are generated.
 
-Project Generation Sequence
-Projects must be created in the following order according to prompts:
+### Step-by-Step Component Generation Process
+Projects must be created strictly following the numbered order below.
 
-Create package structure -> Create files under domain and infra -> Generate pom.xml -> Generate Application.java and application.yml -> Generate fixed files (Dockerfile, Manifests, gateway, kafka) -> Generate test code
--> Test & Run (must be performed)
+#### 1. Metadata Analysis, Validation and Package Structure Creation
+- Analyze Aggregate (aggregates), Command (commands), Event (events), Policy metadata
+- Refer to the "3. Project Structure" section of `@architecture` to correct missing package structure
 
-Mandatory Rules:
-All files must be generated according to requirements before fixing errors. Do not fall into error-fixing loops during file generation.
+#### 2. Kafka Infrastructure Setup (Required Prerequisite)
+- Generate by referring to the Kafka part of `@fixed-generation-rules`
 
-Project Generation Requirements
+#### 3. Gateway Setup
+- If there's no gateway directory at root, generate by referring to the Gateway part of `@fixed-generation-rules`
+- If it already exists, add routes to application.yml
 
-### Basic Principles
-1. Metadata-Based Generation: All files are generated based on metadata and must not be generated with data not included in metadata.
-2. No Reference to Existing Root Files: When creating projects, do not refer to existing files in Root, and package structure follows metadata definitions.
-3. Rule Compliance: Strictly comply with @package-structure, @technical-stack, @domain-event-publishing-rules.
+#### 4. Kafka Configuration Component Generation
+- Refer to "1. KafkaProcessor Interface Definition" section of `@domain-event-publishing-rules`
+- Generate `config/kafka/KafkaProcessor.java`
 
-### Kafka Infrastructure Setup (Required Prerequisites)
-**Important**: Check and create Kafka infrastructure before generating all services
-- If kafka/docker-compose.yml doesn't exist in Root, create it
-  - Zookeeper (port 2181, image: confluentinc/cp-zookeeper:7.9.1)
-  - Kafka (port 9092, image: confluentinc/cp-kafka:7.9.1)
-- If already exists, reuse
+#### 5. Common Infrastructure Component Generation
+- Refer to "2. AbstractEvent Class Implementation" section of `@domain-event-publishing-rules`
+- Generate `infra/AbstractEvent.java` (includes publish(), publishAfterCommit() methods)
 
-### Gateway Setup
-- If gateway directory doesn't exist in Root, generate according to @fixed-generation-rules
-- If already exists, add new service routes to gateway/src/main/resources/application.yml
+#### 6. Domain Component Generation
 
-### Detailed File Generation Sequence
+**Required**: All Aggregates in the metadata must be generated without omission.
 
-#### Step 1: Create Package Structure
-```
-/[service]
-  /src/main/java/[projectname]
-    /config/kafka
-    /domain
-    /infra
-  /src/main/resources
-  /kubernetes
-```
+**Generation Order (Considering Dependencies):**
 
-#### Step 2: Generate Kafka Configuration Files
-- `config/kafka/KafkaProcessor.java`
-  - INPUT = "event-in", OUTPUT = "event-out" constants
-  - Methods with @Input/@Output annotations
+##### 6.1 Repository Interface Generation
+- Refer to "3.2 Layer-wise Roles and Responsibilities > Domain Layer" section of `@architecture`
+- File location: `domain/[Aggregate]Repository.java`
+- Extend JpaRepository<[Aggregate], Long>
 
-#### Step 3: Generate Common Infrastructure Files
-- `infra/AbstractEvent.java`
-  - publish(), publishAfterCommit() methods
-  - BeanUtils.copyProperties logic
-  - Utilize TransactionSynchronizationManager
+##### 6.2 Domain Event Class Generation
+- Refer to "3. Domain Event Class Implementation" section of `@domain-event-publishing-rules`
+- File location: `domain/[Event].java`
+- Extend AbstractEvent, copy fields through BeanUtils.copyProperties
 
-#### Step 4: Generate Domain Files
-**Generation Order (considering dependencies):**
-1. Repository interface (extends JpaRepository)
-2. Domain Event classes (extend AbstractEvent)
-3. Aggregate Root Entity
-   - @Entity, @Table, @Data annotations
-   - Publish events in @PostPersist/@PostUpdate, etc.
-   - static repository() method
-4. Value Objects (if present)
+##### 6.3 Aggregate Root Entity Generation
+- Refer to "4. Event Publishing from Aggregate Root" section of `@domain-event-publishing-rules`
+- File location: `domain/[Aggregate].java`
+- **Annotations**: @Entity, @Table, @Data
+- **Event Publishing**: Call publishAfterCommit() in @PostPersist/@PostUpdate hooks
+- **Static Repository Method**: Implement static repository() method
 
-#### Step 5: Generate Infra Adapters
-- `infra/PolicyHandler.java` (if policies exist)
-  - @StreamListener(KafkaProcessor.INPUT)
-  - Filtering with condition = "headers['type']=='EventName'"
-- `infra/[Aggregate]Controller.java` (optional)
-- `infra/[Aggregate]HateoasProcessor.java` (optional)
+##### 6.4 Value Object Generation (if exists)
+- Refer to "3.2 Layer-wise Roles and Responsibilities > Domain Layer" section of `@architecture`
+- File location: `domain/[ValueObject].java`
+- Use @Embeddable annotation
 
-#### Step 6: Generate Application Class
-- `[ServiceName]Application.java`
-  - @SpringBootApplication
-  - @EnableBinding(KafkaProcessor.class)
-  - public static ApplicationContext applicationContext
+**Key Points:**
+- Strictly adhere to generation order to satisfy dependencies: Repository → Events → Aggregate Root → Value Objects
+- All JPA entities must have appropriate annotations
+- Event publishing must use publishAfterCommit() for transactional safety
 
-#### Step 7: Generate Configuration Files
-- `resources/application.yml`
-  - server.port (unique port per service)
-  - spring.application.name
-  - spring.cloud.stream binding configuration
-  - default profile (brokers: localhost:9092)
-  - docker profile (brokers: my-kafka:9092)
+#### 7. Infrastructure Adapter Component Generation
 
-#### Step 8: Generate Maven Configuration
-- `pom.xml`
-  - Spring Boot 2.3.1.RELEASE
-  - Spring Cloud Hoxton.SR12
-  - Spring Cloud Stream Germantown.SR1
-  - Required dependencies: spring-cloud-starter-stream-kafka, H2, Lombok, HATEOAS
+##### 7.1 PolicyHandler Generation (if policies exist)
+- Refer to "5. PolicyHandler Implementation" section of `@domain-event-publishing-rules`
+- File location: `infra/PolicyHandler.java`
+- **Condition**: Generate only when policy metadata exists
+- Filter by event type using @StreamListener + condition header
+- Number of EventNames in metadata = Number of @StreamListener methods (must match)
 
-#### Step 9: Generate Container and Deployment Files
-- `Dockerfile`
-- `kubernetes/deployment.yaml`
-- `kubernetes/service.yaml`
+##### 7.2 REST Controller Generation (optional)
+- Refer to "3.2 Layer-wise Roles and Responsibilities > Infrastructure Layer" section of `@architecture`
+- File location: `infra/[Aggregate]Controller.java`
+- Custom endpoints complementing Spring Data REST
 
-#### Step 10: Generate Common Files (Gateway, Kafka)
-- Check if gateway/, infra/ (kafka - docker-compose.yml) exist in Root path
-- If not present, configure files through `@fixed-generation-rules`
-- If present, refer to `@fixed-generation-rules` to modify routes in gateway application.yml and handle kafka processing and topic settings in application.yml
+##### 7.3 HATEOAS Processor Generation (optional)
+- Refer to "3.2 Layer-wise Roles and Responsibilities > Infrastructure Layer" section of `@architecture`
+- File location: `infra/[Aggregate]HateoasProcessor.java`
+- Add custom HATEOAS links by implementing ResourceProcessor
 
-#### Step 11: Generate Test Code (Final)
+#### 8. Application Class Generation
+- Refer to "7. Spring Boot Application Class" section of `@domain-event-publishing-rules`
+- File location: `[ServiceName]Application.java`
+- **Required Annotations**: @SpringBootApplication, @EnableBinding(KafkaProcessor.class)
+- **Static ApplicationContext**: Required for Bean access from AbstractEvent
+
+#### 9. Configuration File Generation
+
+##### 9.1 Application Configuration
+- Refer to "6. application.yml Configuration" section of `@domain-event-publishing-rules`
+- Refer to application.yml example in `@fixed-generation-rules`
+- File location: `resources/application.yml`
+- **Required Configuration**: server.port (unique), spring.application.name, spring.cloud.stream.bindings
+- **Profiles**: default (localhost:9092), docker (my-kafka:9092)
+
+#### 10. Maven Configuration Generation
+- Refer to "1.3 Maven Dependencies (pom.xml)" section of `@architecture`
+- File location: `pom.xml`
+- **Required Versions**: Spring Boot 2.3.1.RELEASE, Spring Cloud Hoxton.SR12, Spring Cloud Stream Germantown.SR1
+- **Required Dependencies**: spring-cloud-starter-stream-kafka, spring-boot-starter-data-jpa, H2, Lombok, HATEOAS
+
+#### 11. Container and Deployment File Generation
+- Refer to "Dockerfile" and "Kubernetes Manifests" sections of `@fixed-generation-rules`
+- **File Locations**: 
+  - `Dockerfile`
+  - `kubernetes/deployment.yaml`
+  - `kubernetes/service.yaml`
+
+#### 12. Common File Generation (Gateway, Kafka)
+- Refer to "Gateway" and "Kafka" sections of `@fixed-generation-rules`
+- Check if gateway/, infra/ (kafka - docker-compose.yml) exist at root path
+- If not exist, generate full configuration according to fixed-generation-rules
+- If exist, handle gateway application.yml route addition and kafka topic settings
+
+#### 13. Test Code Generation (Final)
+
+**Required**: Test code generation is essential for complete project setup.
+
 - Refer to `@test-code-generation-rules`
-- Given-When-Then pattern based on JUnit
+- **File Location**: `src/test/java/[projectname]/[ServiceName]Test.java`
+- **Pattern**: JUnit-based Given-When-Then pattern
+- **Scope**: Test all domain logic and event publishing
 
-#### Step 12: Test and Run (Required)
-- Execute Maven build and tests
-- Verify local execution
-- Must repeat the test - error correction process until the test is successful, referring to `@test-code-generation-rules`.
+#### 14. Testing and Execution (Required)
 
-### Error Correction Rules
-- Do not fix errors until all files are generated.
-- Be careful not to fall into error-fixing loops during generation.
+**Execution Process:**
+
+1. Maven build and test execution: `mvn clean install`
+2. Validate local execution: `mvn spring-boot:run`
+3. **Required**: Repeat test - error correction process until tests succeed, referring to `@test-code-generation-rules`
+
+**Key Points:**
+- Do not skip test execution
+- Only correct errors after all files are generated
+- Verify Kafka connection and event publishing
+
+### Important Requirements
+- All component generation must be based on metadata. Do not arbitrarily create components by referencing non-existent metadata.
+- Generate components only when required metadata fields exist
+- Adhere to dependency order: Repository → Events → Entities → Infrastructure
+- All files must be generated according to requirements before error correction

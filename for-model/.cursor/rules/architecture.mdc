@@ -1,0 +1,341 @@
+---
+description: Comprehensive guide for Spring Boot MSA architecture including technology stack, package structure, and Event Storming-based code generation. Must be used when setting up backend microservices.
+---
+# Spring Boot MSA Architecture Guide
+
+## 1. Technology Stack
+
+### 1.1 Core Frameworks
+- **Application Framework**: Spring Boot 2.3.1.RELEASE
+- **Development Environment**: Java 11
+- **Package Namespace**: Using Javax packages (javax.persistence.*, javax.transaction.*, etc.)
+
+### 1.2 Key Technologies
+
+#### Data Access Layer
+**Spring Data JPA**
+- H2 Database (embedded DB at runtime)
+- JPA Entity-based domain modeling
+- Repository pattern using JpaRepository
+
+#### RESTful API
+**Spring Data REST**
+- Automatic REST endpoint exposure
+- HATEOAS-based hypermedia API support
+- Resource processors for custom links
+
+#### Microservice Communication
+**Spring Cloud Stream** (Germantown.SR1 version)
+- Channel definition based on `@Input`/`@Output` annotations
+- Event reception via `@StreamListener`
+- Event publishing through `MessageChannel`
+- Kafka binding for event streaming
+
+#### Lombok
+**Version**: 1.18.12
+- `@Data`: Auto-generation of getter, setter, toString, equals, hashCode
+- `@Builder`: Builder pattern implementation
+- `@NoArgsConstructor`, `@AllArgsConstructor`: Constructor generation
+
+### 1.3 Maven Dependencies (pom.xml)
+
+Required dependencies:
+```xml
+<dependencies>
+    <!-- Spring Boot Starter -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-data-rest</artifactId>
+    </dependency>
+
+    <!-- H2 Database -->
+    <dependency>
+        <groupId>com.h2database</groupId>
+        <artifactId>h2</artifactId>
+        <scope>runtime</scope>
+    </dependency>
+
+    <!-- Spring Cloud Stream -->
+    <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-starter-stream-kafka</artifactId>
+    </dependency>
+
+    <!-- Lombok -->
+    <dependency>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok</artifactId>
+        <version>1.18.12</version>
+        <scope>provided</scope>
+    </dependency>
+
+    <!-- Testing -->
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-test</artifactId>
+        <scope>test</scope>
+    </dependency>
+</dependencies>
+```
+
+**Additional dependency management**:
+- `spring-cloud-dependencies` (Hoxton.SR12)
+- `spring-cloud-stream-dependencies` (Germantown.SR1)
+
+---
+
+## 2. Architecture Patterns
+
+### 2.1 Domain-Driven Design (DDD)
+- **Domain modeling** based on Event Storming
+- **Aggregate Root**: Core domain entity represented as `@Entity`
+- **Domain Events**: Event classes extending AbstractEvent
+- **Repository**: Extends JpaRepository interface
+- **Loose coupling** between services through domain events
+
+### 2.2 Clean Architecture (Hexagonal Architecture)
+
+#### Domain Package (Core Business Logic)
+- **Aggregate Root Entity**: Implementation of business rules and logic
+- **Domain Events**: Important events occurring in the domain
+- **Repository Interface**: Persistence abstraction
+- **Value Objects/Entities**: Domain model components
+
+#### Infrastructure Package (External System Integration)
+- **Controller** (Inbound Adapter): External request handling through REST API
+- **PolicyHandler** (Inbound Adapter): External event reception and business logic triggering
+- **AbstractEvent** (Outbound Adapter): Domain event publishing mechanism
+
+### 2.3 Event-Driven Architecture (EDA)
+- **Asynchronous Communication**: Based on Pub/Sub pattern
+- **Event Sourcing**: Utilizing JPA lifecycle hooks (`@PostPersist`, `@PostUpdate`, etc.)
+- **Transactional Consistency**: Guaranteed event publishing through `publishAfterCommit()`
+- **Selective Subscription**: Event type filtering through `@StreamListener` + condition
+- For detailed event publishing and reception implementation specifications, refer to `@domain-event-publishing-rules`
+
+### 2.4 Microservice Architecture (MSA)
+- Each service owns an **independent database** (H2)
+- **Automatic RESTful API** exposure through Spring Data REST
+- **Event-based communication** between services through Kafka
+- Each service **independently deployable** (Docker + Kubernetes)
+
+---
+
+## 3. Project Structure
+
+### 3.1 Overall Package Structure
+
+Based on the provided metadata, generate the following structure and files:
+
+```
+/gateway # gateway route configuration (optional)
+  /src/main
+    /java/[projectname]
+      /Application.java
+    /resources
+      /application.yml
+  /pom.xml
+
+/infra # docker-compose based Kafka infrastructure (required)
+  /docker-compose.yml # Zookeeper + Kafka configuration
+
+/[service] # Microservice directory created with service name
+  /src
+    /main
+      /java/[projectname]
+        /[ServiceName]Application.java # @SpringBootApplication + @EnableBinding(KafkaProcessor.class)
+
+        /config
+          /kafka
+            /KafkaProcessor.java # Spring Cloud Stream channel interface (@Input/@Output)
+
+        /domain
+          /[Aggregate].java # Aggregate root defined as @Entity
+          /[Aggregate]Repository.java # JpaRepository interface
+          /[Event].java # Domain event class extending AbstractEvent
+          /[ValueObject].java # Embedded value object (optional)
+          /[Entity].java # Entity within aggregate (optional)
+
+        /infra
+          /AbstractEvent.java # Parent class of all domain events (publish(), publishAfterCommit())
+          /[Aggregate]Controller.java # REST API controller
+          /[Aggregate]HateoasProcessor.java # HATEOAS resource processor (optional)
+          /PolicyHandler.java # Receives external events via @StreamListener
+
+      /resources
+        /application.yml # Spring Cloud Stream binding configuration (event-in, event-out)
+
+    /test
+      /java/[projectname]
+        /[ServiceName]Test.java # JUnit test
+
+  /kubernetes
+    /deployment.yaml # Kubernetes Deployment manifest
+    /service.yaml # Kubernetes Service manifest
+
+  /pom.xml # Maven dependencies
+  /Dockerfile # Container image build configuration
+  /README.md # Service documentation (optional)
+```
+
+### 3.2 Layer-wise Roles and Responsibilities
+
+#### Application Layer
+**[ServiceName]Application.java**
+- `@SpringBootApplication`: Spring Boot application entry point
+- `@EnableBinding(KafkaProcessor.class)`: Spring Cloud Stream activation
+
+#### Config Layer
+**KafkaProcessor.java**
+- Spring Cloud Stream messaging channel interface
+- `@Input`: Event reception channel definition
+- `@Output`: Event publishing channel definition
+
+#### Domain Layer (Core Business Logic)
+
+**[Aggregate].java**
+- `@Entity`: Define aggregate root as JPA entity
+- Implement domain business logic methods
+- Event publishing through JPA lifecycle hooks (`@PostPersist`, `@PostUpdate`, etc.)
+
+**[Aggregate]Repository.java**
+- Extends `JpaRepository` interface
+- Automatically provides basic CRUD methods
+- Custom query methods (if needed)
+
+**[Event].java**
+- Extends `AbstractEvent`
+- Define domain event fields
+- Event constructor and default constructor
+
+**[ValueObject].java** (optional)
+- `@Embeddable`: Embedded value object
+- Encapsulates domain concepts
+
+**[Entity].java** (optional)
+- Entity within aggregate
+- Depends on aggregate root
+
+#### Infrastructure Layer (External System Integration)
+
+**AbstractEvent.java**
+- Parent class of all domain events
+- `publish()`: Immediate event publishing
+- `publishAfterCommit()`: Event publishing after transaction commit
+- Event transmission mechanism through Kafka
+
+**[Aggregate]Controller.java**
+- Complements auto-generated API from Spring Data REST
+- API endpoints requiring custom business logic
+- `@RestController` annotation
+
+**[Aggregate]HateoasProcessor.java** (optional)
+- HATEOAS resource processor
+- Add custom links
+
+**PolicyHandler.java**
+- `@Service` annotation
+- `@StreamListener`: Receives external domain events
+- Event type filtering through condition attribute
+- Aggregate root lookup and business logic execution through Repository
+
+#### Resources Layer
+
+**application.yml**
+- Spring Cloud Stream binding configuration
+  - `spring.cloud.stream.bindings.event-in`: Input channel configuration
+  - `spring.cloud.stream.bindings.event-out`: Output channel configuration
+- Kafka broker configuration
+- Database configuration (H2)
+- Server port configuration
+
+---
+
+## 4. Event Storming Sticker-Based Code Generation
+
+Code generated based on Event Storming stickers must follow these requirements:
+
+### 4.1 Event
+
+**Reference Metadata**
+Events use metadata under 'events' to publish events when business logic processing is complete.
+
+**Generated Files**
+Event.java
+- Filename: Event sticker name.java
+- Structure:
+  - Declare fieldDescriptors
+  - Constructor that receives Aggregate as parameter
+  - Declare default constructor
+
+### 4.2 Command
+
+**Reference Metadata**
+Commands use metadata under 'commands', and isRestRepository determines whether to use CRUD API or Extended API. When using Extended API, command files corresponding to DTOs must be generated through fieldDescriptors.
+
+**Generated Files**
+
+Command.java
+- Filename: Command sticker name + Command.java
+- Generation Condition: When isRestRepository is false
+- Structure:
+  - Declare fieldDescriptors
+
+Controller.java
+- Filename: Aggregate sticker name + Controller.java
+- Structure:
+  - When commands using extended API exist, generate extended API code based on controllerInfo and generated Command files
+  - For default API, generate files and handle CRUD with Repository pattern
+  - All above requirements must be generated in a single Controller.java file
+
+### 4.3 Policy
+
+**Reference Metadata and Role**
+Handles domain events defined in policies.incomingRelations.source resources of the model metadata. Refer to @domain-event-publishing-rules for event reception and handling implementation.
+Declare port methods within the Aggregate Root Entity with Policy name, passing received events to implement business logic.
+
+**Generated Files**
+PolicyHandler.java
+- Filename: PolicyHandler.java
+- Structure:
+  - Declare listening events
+  - Declare connected Policies according to event declarations
+  - Call port methods of Aggregates generated based on Policies
+  - If policies do not exist, generate PolicyHandler.java with default configuration
+
+### 4.4 Aggregate
+
+**Reference Metadata**
+Aggregates should be generated based on metadata in the 'aggregates' section, using fieldDescriptors representing attributes and class diagram relationships (Enumeration, ValueObject, Entity) existing in aggregateRoot.entities.relations.
+
+**Generated Files**
+
+AggregateRoot.java
+- Filename: AggregateName.java
+- Structure:
+  - Declare attributes based on fieldDescriptors
+  - lifeCycle (only generated when command metadata's isRestRepository is false)
+  - Declare business logic methods for inbound adapters that publish events (extended API controller, eventListener policyHandler)
+  - Refer to @domain-event-publishing-rules for event publication implementation
+
+Repository.java
+- Filename: AggregateName + Repository.java
+- Structure:
+  - Extend JPARepository
+  - Write queries referring to queryOption if parameters of views or ReadModels exist
+
+---
+
+## 5. Testing Methodology
+
+For detailed test implementation specifications, refer to `@test-code-generation-rules`.
+
+---
+
+## Important Notes
+
+**Files must be generated strictly based on metadata, and no arbitrary data not in metadata should be generated.**
